@@ -19,6 +19,11 @@ def limit_memory(maxsize):
 
 def main():
 
+        UNIGRAM_LB          = 100
+        COOCCUR_LB          = 10
+        INCLUSION_WINDOW    = 100
+        EXCLUSION_WINDOW    = 5
+
         limit_memory(25000000000)
 	parser = argparse.ArgumentParser(description = 'extract and convert equations from tex to png')
 
@@ -44,7 +49,7 @@ def main():
         bi_pmi.apply_freq_filter(20)
         
         #valid_unigrams = [' '+w+' ' for w in uni_fd.keys() if uni_fd[w] > 50 and len(w) >= 3]
-        valid_unigrams = [' '+w+' ' for w in uni_fd.keys() if uni_fd[w] > 100 and len(w) >= 3]
+        valid_unigrams = [' '+w+' ' for w in uni_fd.keys() if uni_fd[w] > UNIGRAM_LB and len(w) >= 3]
         valid_bigrams  = [' '+w1+' '+w2+' ' for w1,w2 in bi_pmi.nbest(bigram_measures.pmi, 15000) if len(w1) >= 3 and len(w2) >= 3]
         vocab = valid_unigrams + valid_bigrams
     
@@ -56,8 +61,6 @@ def main():
             A.add_word(str(word), (str(word), len(word)))
         A.make_automaton()
 
-        INCLUSION_WINDOW    = 50
-        EXCLUSION_WINDOW    = 5
         remove_bi = [w for w,n in uni_fd.most_common(20)]
 
 
@@ -122,7 +125,7 @@ def main():
             for k2 in counts[k1].keys():
                 if len(set(k2.split()).intersection(set(remove_bi))) != 0: # dont need anymore?
                     continue
-                if ' ' in k1.lstrip(' ').rstrip(' ') and counts[k1][k2] > 10 and commonOverlapKmp(k1.lstrip(' ').rstrip(' '), k2.lstrip(' ').rstrip(' ')) == 0 and commonOverlapKmp(k2.lstrip(' ').rstrip(' '), k1.lstrip(' ').rstrip(' ')) == 0:
+                if ' ' in k1.lstrip(' ').rstrip(' ') and counts[k1][k2] > COOCCUR_LB and commonOverlapKmp(k1.lstrip(' ').rstrip(' '), k2.lstrip(' ').rstrip(' ')) == 0 and commonOverlapKmp(k2.lstrip(' ').rstrip(' '), k1.lstrip(' ').rstrip(' ')) == 0:
                     count_df.at[k1, k2] += counts[k1][k2]
                     if (k2,k1) not in test:
                         test[(k1,k2)] = 1
